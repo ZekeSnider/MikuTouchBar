@@ -1,37 +1,26 @@
-// Touch screen library with X Y and Z (pressure) readings as well
-// as oversampling to avoid 'bouncing'
-// This demo code returns raw readings, public domain
-
 #include <stdint.h>
 #include "TouchScreen.h"
-
-
-#define XP 9   // can be a digital pin
-#define YP A2  // must be an analog pin, use "An" notation!
-#define XM A3  // must be an analog pin, use "An" notation!
-#define YM 8   // can be a digital pin
 
 #define PRESSURE_THREASHOLD 300
 #define SCREEN_WIDTH 1000
 
 //XP, YP, XM, YM
+//Port definitions for where the touch screens are plugged in
 byte pins[1][4] = {
   { 9, A2, A3, 8}
 };
 
+//Array to hold the touch screen objects
 TouchScreen* touchScreens[2];
 
 // For better pressure precision, we need to know the resistance
 // between X+ and X- Use any multimeter to read it
 // For the one we're using, its 300 ohms across the X plate
-//TouchScreen ts = TouchScreen(pins[0][0], pins[0][1], pins[0][2], pins[0][3], 300);
-//TouchScreen ts2 = TouchScreen(XP, YP, XM, YM, 300);
-//TouchScreen ts2 = TouchScreen(XP, YP, XM, YM, 300);
-
-//TouchScreen touchArray [2] = {ts, ts2};
 
 void setup(void) {
   int index = 0;
+  
+  //Instantiate all the touchscreens.
   for (auto& pin : pins) {
     touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], PRESSURE_THREASHOLD);
     index++;
@@ -44,15 +33,15 @@ void loop(void) {
   int index = 0;
   for (auto& ts : touchScreens) {
     // a point object holds x y and z coordinates
-    TSPoint p = ts->getPoint();
+    TSPoint thisPoint = ts->getPoint();
 
     // we have some minimum pressure we consider 'valid'
     // pressure of 0 means no pressing!
-    if (p.z > ts->pressureThreshhold) {
-       TransformPoint(inPoint, index);
-       Serial.print("X = "); Serial.print(p.x);
-       Serial.print("\tY = "); Serial.print(p.y);
-       Serial.print("\tPressure = "); Serial.println(p.z);
+    if (thisPoint.z > ts->pressureThreshhold) {
+       TransformPoint(thisPoint, index);
+       Serial.print("X = "); Serial.print(thisPoint.x);
+       Serial.print("\tY = "); Serial.print(thisPoint.y);
+       Serial.print("\tPressure = "); Serial.println(thisPoint.z);
     }
 
     index++;
@@ -61,8 +50,8 @@ void loop(void) {
   delay(100);
 }
 
-void TransformPoint(TSPoint*& inPoint, int index) {
-   inPoint->x += SCREEN_WIDTH * index;
+void TransformPoint(TSPoint& inPoint, int index) {
+   inPoint.x += SCREEN_WIDTH * index;
    return;
 }
 
