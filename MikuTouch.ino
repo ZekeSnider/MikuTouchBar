@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include "TouchScreen.h"
 
-#define PRESSURE_THRESHOLD 300
+#define PRESSURE_THRESHOLD 200
+#define READ_DELAY 50
+
+#define MIN_SWIPE
+
 #define SCREEN_WIDTH 1000
 #define INVALID_TOUCH -50
 
@@ -11,9 +15,12 @@ byte pins[1][4] = {
   { 9, A2, A3, 8}
 };
 
+enum class Direction { left, right };
+
 //Array to hold the touch screen objects
-TouchScreen* touchScreens[2];
-int latestReading[2] = {INVALID_TOUCH, INVALID_TOUCH};
+TouchScreen* touchScreens[1];
+int latestReading[1] = {INVALID_TOUCH};
+
 
 // For better pressure precision, we need to know the resistance
 // between X+ and X- Use any multimeter to read it
@@ -24,7 +31,7 @@ void setup(void) {
   
   //Instantiate all the touchscreens.
   for (auto& pin : pins) {
-    touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], PRESSURE_THRESHOLD);
+    touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], 650);
     index++;
   }
   
@@ -39,19 +46,42 @@ void loop(void) {
     TSPoint thisPoint = ts->getPoint();
 
     //Check if the reading exceeds the pressure threshold
-    if (thisPoint.z > ts->pressureThreshhold) {
-       TransformPoint(thisPoint, index);
-       Serial.print("X = "); Serial.print(thisPoint.x);
-       Serial.print("\tY = "); Serial.print(thisPoint.y);
-       Serial.print("\tPressure = "); Serial.println(thisPoint.z);
+    if (thisPoint.z > PRESSURE_THRESHOLD) {
+       //TransformPoint(thisPoint, index);
 
        for (auto& aLatest : latestReading) {
-          if (thisPoint.x - aLatest <= 10) {
-            Serial.print("swiping right!!");
+          if (aLatest != INVALID_TOUCH) {
+            Direction swipeDirection;
+            int diff;
+            if (thisPoint.x > aLatest) {
+              diff = thisPoint.x - aLatest;
+              swipeDirection = Direction::right;
+            }
+            else {
+              diff = aLatest - thisPoint.x;
+              swipeDirection = Direction::left;
+            }
+  
+            Serial.print("thisPoint = ");
+            Serial.print(thisPoint.x);
+            Serial.print(" alatest = ");
+            Serial.print(aLatest);
+            Serial.print(" diff = ");
+            Serial.print(diff);
+  
+            //Serial.print(diff);
+  
+            if (diff <= 180 && diff > 3) {
+              if (swipeDirection == Direction::right) {
+                Serial.print(" swiping right");
+              }
+              else {
+                Serial.print(" swiping left");
+              }
+            }
+  
+            Serial.print("\n");
           }
-          else if (latestReading[index] - aLatest <= 10) {
-            Serial.print("swiping left!!");
-          }  
        }
 
        //Store this as the latest. 
@@ -64,8 +94,8 @@ void loop(void) {
 
     index++;
   }
-  
-  delay(100);
+
+  delay(READ_DELAY);
 }
 
 void TransformPoint(TSPoint& inPoint, int index) {
