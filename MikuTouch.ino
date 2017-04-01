@@ -9,6 +9,11 @@
 #define SCREEN_WIDTH 1000
 #define INVALID_TOUCH -50
 
+int R1Pin = 2;
+int L1Pin = 3;
+int R2Pin = 4;
+int L2Pin = 5;
+
 //XP, YP, XM, YM
 //Port definitions for where the touch screens are plugged in
 byte pins[1][4] = {
@@ -28,13 +33,15 @@ int latestReading[1] = {INVALID_TOUCH};
 
 void setup(void) {
   int index = 0;
-  
+
+  pinMode(R2Pin, OUTPUT);
+  digitalWrite(R2Pin, HIGH);
   //Instantiate all the touchscreens.
   for (auto& pin : pins) {
     touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], 650);
     index++;
   }
-  
+
   Serial.begin(9600);
 }
 
@@ -47,48 +54,51 @@ void loop(void) {
 
     //Check if the reading exceeds the pressure threshold
     if (thisPoint.z > PRESSURE_THRESHOLD) {
-       //TransformPoint(thisPoint, index);
+      //TransformPoint(thisPoint, index);
 
-       for (auto& aLatest : latestReading) {
-          if (aLatest != INVALID_TOUCH) {
-            Direction swipeDirection;
-            int diff;
-            if (thisPoint.x > aLatest) {
-              diff = thisPoint.x - aLatest;
-              swipeDirection = Direction::right;
+      for (auto& aLatest : latestReading) {
+        if (aLatest != INVALID_TOUCH) {
+          Direction swipeDirection;
+          int diff;
+          if (thisPoint.x > aLatest) {
+            diff = thisPoint.x - aLatest;
+            swipeDirection = Direction::right;
+          }
+          else {
+            diff = aLatest - thisPoint.x;
+            swipeDirection = Direction::left;
+          }
+
+          Serial.print("thisPoint = ");
+          Serial.print(thisPoint.x);
+          Serial.print(" alatest = ");
+          Serial.print(aLatest);
+          Serial.print(" diff = ");
+          Serial.print(diff);
+
+          if (diff <= 180 && diff > 3) {
+            if (swipeDirection == Direction::right) {
+              Serial.print(" swiping right");
+              digitalWrite(R1Pin, LOW);
             }
             else {
-              diff = aLatest - thisPoint.x;
-              swipeDirection = Direction::left;
+              Serial.print(" swiping left");
             }
-  
-            Serial.print("thisPoint = ");
-            Serial.print(thisPoint.x);
-            Serial.print(" alatest = ");
-            Serial.print(aLatest);
-            Serial.print(" diff = ");
-            Serial.print(diff);
-  
-            //Serial.print(diff);
-  
-            if (diff <= 180 && diff > 3) {
-              if (swipeDirection == Direction::right) {
-                Serial.print(" swiping right");
-              }
-              else {
-                Serial.print(" swiping left");
-              }
-            }
-  
-            Serial.print("\n");
           }
-       }
+          else {
+            digitalWrite(R1Pin, HIGH);
+          }
 
-       //Store this as the latest. 
-       latestReading[index] = thisPoint.x;
+          Serial.print("\n");
+        }
+      }
+
+      //Store this as the latest.
+      latestReading[index] = thisPoint.x;
     }
     //If the screen did not reach pressure treshold, write invalid value.
     else {
+      digitalWrite(R1Pin, HIGH);
       latestReading[index] = INVALID_TOUCH;
     }
 
@@ -99,7 +109,7 @@ void loop(void) {
 }
 
 void TransformPoint(TSPoint& inPoint, int index) {
-   inPoint.x += SCREEN_WIDTH * index;
-   return;
+  inPoint.x += SCREEN_WIDTH * index;
+  return;
 }
 
