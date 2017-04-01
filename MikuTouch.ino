@@ -1,30 +1,31 @@
 #include <stdint.h>
 #include "TouchScreen.h"
 
-#define PRESSURE_THRESHOLD 200
+#define TOUCHSCREEN_COUNT 1
+#define PRESSURE_THRESHOLD -1
 #define READ_DELAY 50
 
 #define MIN_SWIPE
 
-#define SCREEN_WIDTH 1000
+#define SCREEN_WIDTH 865
 #define INVALID_TOUCH -50
 
-int R1Pin = 2;
+int R1Pin = 4;
 int L1Pin = 3;
 int R2Pin = 4;
 int L2Pin = 5;
 
 //XP, YP, XM, YM
 //Port definitions for where the touch screens are plugged in
-byte pins[1][4] = {
-  { 9, A2, A3, 8}
+byte pins[TOUCHSCREEN_COUNT][4] = {
+  { 7, A4, A5, 6}
 };
 
 enum class Direction { left, right };
 
 //Array to hold the touch screen objects
-TouchScreen* touchScreens[1];
-int latestReading[1] = {INVALID_TOUCH};
+TouchScreen* touchScreens[TOUCHSCREEN_COUNT];
+int latestReading[TOUCHSCREEN_COUNT] = {INVALID_TOUCH};
 
 
 // For better pressure precision, we need to know the resistance
@@ -34,8 +35,9 @@ int latestReading[1] = {INVALID_TOUCH};
 void setup(void) {
   int index = 0;
 
-  pinMode(R2Pin, OUTPUT);
-  digitalWrite(R2Pin, HIGH);
+  pinMode(R1Pin, OUTPUT);
+  digitalWrite(R1Pin, HIGH);
+  
   //Instantiate all the touchscreens.
   for (auto& pin : pins) {
     touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], 650);
@@ -54,7 +56,7 @@ void loop(void) {
 
     //Check if the reading exceeds the pressure threshold
     if (thisPoint.z > PRESSURE_THRESHOLD) {
-      //TransformPoint(thisPoint, index);
+      TransformPoint(thisPoint, index);
 
       for (auto& aLatest : latestReading) {
         if (aLatest != INVALID_TOUCH) {
@@ -83,10 +85,11 @@ void loop(void) {
             }
             else {
               Serial.print(" swiping left");
+              //digitalWrite(L1Pin, LOW);
             }
           }
           else {
-            digitalWrite(R1Pin, HIGH);
+            //digitalWrite(R1Pin, HIGH);
           }
 
           Serial.print("\n");
@@ -95,10 +98,11 @@ void loop(void) {
 
       //Store this as the latest.
       latestReading[index] = thisPoint.x;
+      index++;
     }
     //If the screen did not reach pressure treshold, write invalid value.
     else {
-      digitalWrite(R1Pin, HIGH);
+      //digitalWrite(R1Pin, HIGH);
       latestReading[index] = INVALID_TOUCH;
     }
 
@@ -109,6 +113,7 @@ void loop(void) {
 }
 
 void TransformPoint(TSPoint& inPoint, int index) {
+  inPoint.x -= 70;
   inPoint.x += SCREEN_WIDTH * index;
   return;
 }
