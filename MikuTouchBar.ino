@@ -2,7 +2,7 @@
 #include "TouchScreen.h"
 
 #define TOUCHSCREEN_COUNT 1
-#define PRESSURE_THRESHOLD -1
+#define PRESSURE_THRESHOLD 5
 #define READ_DELAY 50
 
 #define MIN_SWIPE
@@ -40,7 +40,7 @@ void setup(void) {
   
   //Instantiate all the touchscreens.
   for (auto& pin : pins) {
-    touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], 650);
+    touchScreens[index] = new TouchScreen(pin[0], pin[1], pin[2], pin[3], 300);
     index++;
   }
 
@@ -113,7 +113,7 @@ void loop(void) {
 }
 
 void TransformPoint(TSPoint& inPoint, int index) {
-  inPoint.x -= 70;
+  //inPoint.x -= 70;
   inPoint.x += SCREEN_WIDTH * index;
   return;
 }
