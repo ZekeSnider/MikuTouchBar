@@ -1,19 +1,16 @@
 #include <stdint.h>
 #include "TouchScreen.h"
-
 #define TOUCHSCREEN_COUNT 2
 #define PRESSURE_THRESHOLD 1
 #define READ_DELAY 50
-
 #define MIN_SWIPE
-
 #define SCREEN_WIDTH 865
 #define INVALID_TOUCH -5000
 
-int R1Pin = 4;
-int L1Pin = 3;
-int R2Pin = 4;
-int L2Pin = 5;
+int R1Pin = 5;
+int R2Pin = 3;
+int L1Pin = 4;
+int L2Pin = 2;
 
 //XP, YP, XM, YM
 //Port definitions for where the touch screens are plugged in
@@ -37,11 +34,9 @@ void setup(void) {
   int index = 0;
 
   pinMode(R1Pin, OUTPUT);
-  pinMode(L1Pin, OUTPUT);
   pinMode(R2Pin, OUTPUT);
+  pinMode(L1Pin, OUTPUT);
   pinMode(L2Pin, OUTPUT);
-  
-  digitalWrite(R1Pin, HIGH);
   
   //Instantiate all the touchscreens.
   for (auto& pin : pins) {
@@ -54,7 +49,9 @@ void setup(void) {
 
 void loop(void) {
   int thisReading[TOUCHSCREEN_COUNT] = {INVALID_TOUCH, INVALID_TOUCH};
-  int index, RButton, LButton = 0;
+  int index = 0;
+  int RButton = 0;
+  int LButton = 0;
   
   //Get a reading from each touch screen
   for (auto& ts : touchScreens) {
@@ -99,8 +96,6 @@ void loop(void) {
               LButton++;
             }
           }
-
-          
         }
         count++;
       }
@@ -113,10 +108,9 @@ void loop(void) {
       thisReading[index] = INVALID_TOUCH;
     }
     
-    
     index++;
   }
-
+  
   SetPins(RButton, Direction::right);
   SetPins(LButton, Direction::left);
 
@@ -141,12 +135,12 @@ void SetPins(int& buttonNum, Direction swipeDirection) {
   }
   else if (buttonNum == 1) {
     if (swipeDirection == Direction::right) {
-      digitalWrite(R2Pin, LOW);
-      digitalWrite(R1Pin, HIGH);
+      digitalWrite(R2Pin, HIGH);
+      digitalWrite(R1Pin, LOW);
     }
     else {
-      digitalWrite(L2Pin, LOW);
-      digitalWrite(L1Pin, HIGH);
+      digitalWrite(L2Pin, HIGH);
+      digitalWrite(L1Pin, LOW);
     }
   }
   else {
