@@ -2,7 +2,7 @@
 #include "TouchScreen.h"
 
 #define TOUCHSCREEN_COUNT 2
-#define PRESSURE_THRESHOLD 5
+#define PRESSURE_THRESHOLD 1
 #define READ_DELAY 50
 
 #define MIN_SWIPE
@@ -37,6 +37,10 @@ void setup(void) {
   int index = 0;
 
   pinMode(R1Pin, OUTPUT);
+  pinMode(L1Pin, OUTPUT);
+  pinMode(R2Pin, OUTPUT);
+  pinMode(L2Pin, OUTPUT);
+  
   digitalWrite(R1Pin, HIGH);
   
   //Instantiate all the touchscreens.
@@ -50,7 +54,8 @@ void setup(void) {
 
 void loop(void) {
   int thisReading[TOUCHSCREEN_COUNT] = {INVALID_TOUCH, INVALID_TOUCH};
-  int index = 0;
+  int index, RButton, LButton = 0;
+  
   //Get a reading from each touch screen
   for (auto& ts : touchScreens) {
     // a point object holds x y and z coordinates
@@ -58,6 +63,7 @@ void loop(void) {
 
     //Check if the reading exceeds the pressure threshold
     if (thisPoint.z > PRESSURE_THRESHOLD) {
+      Serial.print("\n----------\n");
       TransformPoint(thisPoint, index);
       int count = 0;
       for (auto& aLatest : latestReading) {
@@ -86,13 +92,15 @@ void loop(void) {
           if (diff <= 180 && diff > 3) {
             if (swipeDirection == Direction::right) {
               Serial.print(" swiping right");
+              RButton++;
             }
             else {
               Serial.print(" swiping left");
+              LButton++;
             }
           }
 
-          Serial.print("\n----------\n");
+          
         }
         count++;
       }
@@ -104,15 +112,53 @@ void loop(void) {
     else {
       thisReading[index] = INVALID_TOUCH;
     }
-
+    
+    
     index++;
   }
+
+  SetPins(RButton, Direction::right);
+  SetPins(LButton, Direction::left);
 
   //Copy thisReading array to the latestReading for next time.
   for (int i = 0; i < TOUCHSCREEN_COUNT; i++) {
     latestReading[i] = thisReading[i];
   }
   delay(READ_DELAY);
+}
+
+
+void SetPins(int& buttonNum, Direction swipeDirection) {
+  if (buttonNum >= 2) {
+    if (swipeDirection == Direction::right) {
+      digitalWrite(R2Pin, LOW);
+      digitalWrite(R1Pin, LOW);
+    }
+    else {
+      digitalWrite(L2Pin, LOW);
+      digitalWrite(L1Pin, LOW);
+    }
+  }
+  else if (buttonNum == 1) {
+    if (swipeDirection == Direction::right) {
+      digitalWrite(R2Pin, LOW);
+      digitalWrite(R1Pin, HIGH);
+    }
+    else {
+      digitalWrite(L2Pin, LOW);
+      digitalWrite(L1Pin, HIGH);
+    }
+  }
+  else {
+    if (swipeDirection == Direction::right) {
+      digitalWrite(R2Pin, HIGH);
+      digitalWrite(R1Pin, HIGH);
+    }
+    else {
+      digitalWrite(L2Pin, HIGH);
+      digitalWrite(L1Pin, HIGH);
+    }
+  }
 }
 
 void TransformPoint(TSPoint& inPoint, int index) {
