@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include "TouchScreen.h"
 #define TOUCHSCREEN_COUNT 2
-#define PRESSURE_THRESHOLD 1
-#define READ_DELAY 50
+#define PRESSURE_THRESHOLD  100
+#define READ_DELAY 20
 #define MIN_SWIPE
 #define SCREEN_WIDTH 865
 #define INVALID_TOUCH -5000
@@ -58,6 +58,8 @@ void loop(void) {
     // a point object holds x y and z coordinates
     TSPoint thisPoint = ts->getPoint();
 
+    //Serial.print(thisPoint.z);
+    //Serial.print("\n");
     //Check if the reading exceeds the pressure threshold
     if (thisPoint.z > PRESSURE_THRESHOLD) {
       Serial.print("\n----------\n");
@@ -86,7 +88,7 @@ void loop(void) {
           Serial.print(" diff = ");
           Serial.print(diff);*/
 
-          if (diff <= 180 && diff > 3) {
+          if (diff <= 180 && diff > 2) {
             if (swipeDirection == Direction::right) {
               Serial.print(" swiping right");
               RButton++;
